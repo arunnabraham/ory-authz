@@ -1,0 +1,11 @@
+services:
+  nodejs:
+    image: 'node:22.8.0-alpine3.20'
+    ports:
+      - "8080:80"
+  ory:
+    image: 'oryd/kratos:latest'
+    volumes:
+      - 'kratos/kratos.yml:/home/ory/kratos.yml'
+    depends_on:
+      - nodejs
