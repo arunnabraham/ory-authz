@@ -1,11 +1,39 @@
 services:
   nodejs:
-    image: 'node:22.8.0-alpine3.20'
+    image: ${NODE_IMAGE}
     ports:
       - "8080:80"
-  ory:
-    image: 'oryd/kratos:latest'
     volumes:
-      - 'kratos/kratos.yml:/home/ory/kratos.yml'
+      - "./code:/app"
+  postgres:
+    image: ${POSTGRES_IMAGE}
+    volumes:
+      - "./db/mount:/var/lib/postgresql/data"
+    ports:
+      - "${DB_PORT}:${DB_PORT}"
+    environment:
+      - "POSTGRES_PASSWORD=${DB_PASS}"
+      - "PGDATA=/var/lib/postgresql/data/pgdata"
+    command: "PGPASSWORD=${DB_PASS}  psql -U ${DB_USER} -c 'create database auth;'"
+  kratos-migrate:
+    image: ${KRATOS_IMAGE}
+    environment:
+      - DSN=postgres://postgres:${DB_PASS}@${DB_HOST}/${DB_NAME}
+    volumes:
+      - './kratos/kratos.yml:/home/ory/kratos.yml'
+      - './kratos/identity.schema.json:/etc/config/kratos/identity.schema.json'
+    command: 
+      - 'kratos -c /home/ory/kratos.yml migrate sql -e --yes'
+  kratos:
+    image: ${KRATOS_IMAGE}
+    volumes:
+      - './kratos/kratos.yml:/home/ory/kratos.yml'
+      - './kratos/identity.schema.json:/etc/config/kratos/identity.schema.json'
+    command: "serve -c /home/ory/kratos.yml"
+    ports:
+      - '${ORY_ADMIN_PORT}:${ORY_ADMIN_PORT}'
+      - '${ORY_PUBLIC_PORT}:${ORY_PUBLIC_PORT}'
     depends_on:
+      - postgres
+      - kratos-migrate
       - nodejs
