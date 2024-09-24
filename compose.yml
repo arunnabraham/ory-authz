@@ -14,26 +14,16 @@ services:
     environment:
       - "POSTGRES_PASSWORD=${DB_PASS}"
       - "PGDATA=/var/lib/postgresql/data/pgdata"
-    command: "PGPASSWORD=${DB_PASS}  psql -U ${DB_USER} -c 'create database auth;'"
-  kratos-migrate:
-    image: ${KRATOS_IMAGE}
-    environment:
-      - DSN=postgres://postgres:${DB_PASS}@${DB_HOST}/${DB_NAME}
-    volumes:
-      - './kratos/kratos.yml:/home/ory/kratos.yml'
-      - './kratos/identity.schema.json:/etc/config/kratos/identity.schema.json'
-    command: 
-      - 'kratos -c /home/ory/kratos.yml migrate sql -e --yes'
+    # command: "export PGPASSWORD=${DB_PASS}; psql -U ${DB_USER} -h localhost -c 'create database auth;'"
   kratos:
-    image: ${KRATOS_IMAGE}
-    volumes:
-      - './kratos/kratos.yml:/home/ory/kratos.yml'
-      - './kratos/identity.schema.json:/etc/config/kratos/identity.schema.json'
-    command: "serve -c /home/ory/kratos.yml"
+    image: kratos-debian:1.2.0
+    build: .
+    command:
+      - '/usr/local/bin/kratos --help'
+      #- "kratos serve -c /home/kratos/kratos.yml"
     ports:
       - '${ORY_ADMIN_PORT}:${ORY_ADMIN_PORT}'
       - '${ORY_PUBLIC_PORT}:${ORY_PUBLIC_PORT}'
     depends_on:
       - postgres
-      - kratos-migrate
       - nodejs
