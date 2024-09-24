@@ -1,4 +1,4 @@
 # Ory Authorization
 
-* Email(passwordless) Authentication
+* Email(passwordless) Authentication (Webauthn)
 * Google Authentication
